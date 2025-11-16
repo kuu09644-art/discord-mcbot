@@ -5,9 +5,7 @@ import asyncio
 import json
 import os
 
-# ❌ Mac 専用 → Railway では不要なので削除
-# discord.opus.load_opus("/opt/homebrew/opt/opus/lib/libopus.dylib")
-
+# ==== TOKEN ====
 TOKEN = os.getenv("BOT_TOKEN")
 
 intents = discord.Intents.default()
@@ -167,10 +165,12 @@ async def handle_after_play(ctx):
 # ====================================
 @bot.event
 async def on_ready():
+    global chat_enabled
+    chat_enabled = True
     print(f"ログインしました: {bot.user}")
 
 # ====================================
-# コマンド
+# VC 関連
 # ====================================
 @bot.command()
 async def join(ctx):
@@ -355,77 +355,6 @@ async def chat(ctx, mode: str):
         await ctx.send("使い方: `!chat on` / `!chat off`")
 
 # ====================================
-# HelpView
-# ====================================
-from discord.ui import View, button
-
-class HelpView(View):
-    def __init__(self):
-        super().__init__(timeout=None)
-
-    @staticmethod
-    def main_page():
-        embed = discord.Embed(
-            title="📘 メインヘルプ",
-            description="ボットの基本コマンド一覧です！",
-            color=0x3498db
-        )
-        embed.add_field(name="!help", value="ヘルプを表示", inline=False)
-        embed.add_field(name="!chat on/off", value="ボットの発言を制御", inline=False)
-        embed.add_field(name="!join / !leave", value="VC参加 / 退出", inline=False)
-        return embed
-
-    @staticmethod
-    def music_page():
-        embed = discord.Embed(
-            title="🎵 音楽コマンド",
-            description="ミュージック関連コマンドです！",
-            color=0x1abc9c
-        )
-        embed.add_field(name="!play [URL/番号]", value="音楽を再生", inline=False)
-        embed.add_field(name="!search", value="YouTube検索", inline=False)
-        embed.add_field(name="!skip / !pause / !resume", value="操作", inline=False)
-        embed.add_field(name="!queue / !now", value="情報表示", inline=False)
-        embed.add_field(name="!loop", value="ループON/OFF", inline=False)
-        embed.add_field(name="!volume / !bass", value="音質調整", inline=False)
-        return embed
-
-    @staticmethod
-    def admin_page():
-        embed = discord.Embed(
-            title="🛠 管理者コマンド",
-            description="管理者専用",
-            color=0xe74c3c
-        )
-        embed.add_field(name="!shutdown", value="BOT停止", inline=False)
-        embed.add_field(name="!reload", value="設定リロード", inline=False)
-        embed.add_field(name="!clear", value="キュー全削除", inline=False)
-        return embed
-
-    @button(label="メイン", style=discord.ButtonStyle.primary)
-    async def main_button(self, interaction, btn):
-        await interaction.response.edit_message(embed=self.main_page(), view=self)
-
-    @button(label="音楽", style=discord.ButtonStyle.success)
-    async def music_button(self, interaction, btn):
-        await interaction.response.edit_message(embed=self.music_page(), view=self)
-
-    @button(label="管理", style=discord.ButtonStyle.danger)
-    async def admin_button(self, interaction, btn):
-        await interaction.response.edit_message(embed=self.admin_page(), view=self)
-
-@bot.command()
-async def help(ctx):
-    view = HelpView()
-    await safe_send(ctx, embed=HelpView.main_page(), view=view)
-
-@bot.event
-async def on_ready():
-    global chat_enabled
-    chat_enabled = True  # ← 起動時に絶対ONに戻す
-    print(f"ログインしました: {bot.user}")
-
-# ====================================
 # 🎧 自動切断（VCに誰もいなくなったら10秒後切る）
 # ====================================
 @bot.event
@@ -443,4 +372,7 @@ async def on_voice_state_update(member, before, after):
             await voice.disconnect()
             print("🔌 自動切断しました（VCに誰もいないため）")
 
+# ====================================
+# 実行
+# ====================================
 bot.run(TOKEN)
